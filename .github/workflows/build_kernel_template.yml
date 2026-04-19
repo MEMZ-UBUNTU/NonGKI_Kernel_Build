@@ -23,7 +23,7 @@ env:
 jobs:
   build:
     name: Build Kernel by ${{ github.actor }}
-    runs-on: self-hosted
+    runs-on: [self-hosted, ASUS-TUF-Gaming-F15]
     env:
       CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
       CCACHE_NOHASHDIR: "true"
