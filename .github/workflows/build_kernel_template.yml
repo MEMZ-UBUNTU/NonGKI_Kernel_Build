@@ -17,7 +17,7 @@ env:
   GENERATE_CHIP: "qcom" # only supported for qcom and mediatek.
   BUILD_DEBUGGER: "false" # Output build errors.
   BUILD_OTHER_CONFIG: "false" # Merge config files.
-  FREE_MORE_SPACE: "false" # if u want get more space, enabled it.
+  FREE_MORE_SPACE: "true" # if u want get more space, enabled it.
 
 
 jobs:
@@ -39,13 +39,22 @@ jobs:
 
           # all of these default to true, but feel free to set to
           # "false" if necessary for your workflow
-          android: false
+          android: true
           dotnet: true
           haskell: true
           large-packages: true
           docker-images: true
           swap-storage: true
-
+            
+      - name: Clean Disk Space First
+        run: |
+          sudo apt-get clean
+          sudo apt-get autoclean
+          sudo apt-get autoremove -y
+          sudo rm -rf /var/lib/apt/lists/*
+          sudo rm -rf /opt/hostedtoolcache
+          sudo rm -rf /usr/local/lib/android
+          df -h
       - name: Remove useless tools
         run: |
           sudo rm -rf /opt/hostedtoolcache
@@ -113,11 +122,17 @@ jobs:
         run: |
           lsb_release -a
           UBUNTU_VERSION=$(lsb_release -sr)
+          
+          # Clean apt cache before update
+          sudo apt-get clean
           sudo apt-get update
-
+          
           if [ $UBUNTU_VERSION == "22.04" ] || [ $UBUNTU_VERSION == "20.04" ]; then
-            sudo apt-get install git ccache automake flex lzop bison gperf build-essential zip curl zlib1g-dev g++-multilib libxml2-utils bzip2 libbz2-dev libbz2-1.0 libghc-bzlib-dev squashfs-tools pngcrush schedtool dpkg-dev liblz4-tool make optipng maven libssl-dev pwgen libswitch-perl policycoreutils minicom libxml-sax-base-perl libxml-simple-perl bc libc6-dev-i386 lib32ncurses5-dev libx11-dev lib32z-dev libgl1-mesa-dev xsltproc unzip device-tree-compiler
-            sudo apt-get install p7zip p7zip-full -y
+            sudo apt-get install -y git ccache automake flex lzop bison gperf build-essential zip curl zlib1g-dev g++-multilib libxml2-utils bzip2 libbz2-dev libbz2-1.0 libghc-bzlib-dev squashfs-tools
+            sudo apt-get install -y p7zip p7zip-full
+                      
+          # Clean apt cache after installation
+          sudo apt-get clean
             if [ "${{ env.PYTHON_VERSION }}" == "3" ]; then
                 sudo apt install python2 python3 -y
             elif [ "${{ env.PYTHON_VERSION }}" == "2" ]; then
@@ -137,7 +152,7 @@ jobs:
         if: env.GCC_GNU == 'true'
         run: |
           if [ -z ${{ env.GCC_64_SOURCE }} ] && [ -z ${{ env.GCC_32_SOURCE }} ]; then
-            sudo apt-get install binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi -y
+            sudo apt-get install -y binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi
             echo "GCC_64=CROSS_COMPILE=aarch64-linux-gnu-" >> $GITHUB_ENV
             echo "GCC_32=CROSS_COMPILE_ARM32=arm-linux-gnueabi-" >> $GITHUB_ENV
           else
